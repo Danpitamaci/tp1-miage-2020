@@ -48,9 +48,22 @@ _Temps estimé : 1 h_
 
 IMPORTANT: [Question]  Que constatez-vous  en terme de découpage du code ? Imaginez un projet d'entreprise constitué de centaines de classes ainsi structuré. Que risque-t-il d'arriver ?
 
-IMPORTANT: [Question]  Que se passe-t-il si l'on renomme une colonne de la base de donnée ?
+On constate un découpage en couches mais sans les packages. 
+
+Avec une telle architecture s'il y a des centaines de classes, il y aura une forte dépendance des implémentations entre les classes. Car cette architecture ne respecte pas le "D" des 5 principes SOLID. Il faut dépendre des abstactions et pas des implémentations.
+Une granularité trop fine est mal adaptée à la programmation grande echelle.
+
+ En plus, un tel découpage, sans packages, devient rapidement ingérable si le nombre de classes augmente. On va rapidement se perdre dans les fichiers.
+
+IMPORTANT: [Question]  Que se passe-t-il si l'on renomme une colonne de la base de donées ?
+
+Si une colonne de  la base de données est renommée, la couche présentation ne pourra montrer ce changement que si on intervient au niveau de la couche présentation, qui interviendra sur la couche traitement, ainsi de suite car chaque couche communique avec la couche qui lui est adjacente.
 
 IMPORTANT: [Question]  Où se trouve le code métier (voir la règle de gestion RG1) ? cette règle est-elle facilement testable par un test unitaire ? 
+
+Le code métier se trouve dans le "todoListController.java".
+Cette règle de gestion n'est pas facilement testable par un test unitaire car elle a une dépendance vers la base de données (vers un objet JPA). Donc pour pouvoir réaliser un test unitaire dessus il faudrait un object JPA ou un outil de mock.
+
 
 * Lancer une base PostgreSQL en Docker :
 ```bash
@@ -58,7 +71,13 @@ docker run --rm -it -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
 ```
 IMPORTANT: [Question]  Expliquer cette ligne de commande (y compris les options utilisées)
 
+Cette commande permet de lancer une base postgreSQL.
+L'option --rm permet de supprimer automatiquement le container une fois qu'il se ferme avec succès.
+L'option -it permet de connecter un terminal de l'utilisateur au flux d'entrée et de sortie. Le mix entre les options -i et -t permet de lancer le processus en mode interactif.
+L'option -p permet de publier le port du conteneur à l'hôte.
+
 * Compléter le code manquant dans la méthode `TodoListController.createTodoItem()`
+
 
 * Pourquoi `todoItemRepository` est-il `null` ? Quelle est la meilleure façon de l'injecter ? Modifier le code en conséquence.
 
@@ -98,16 +117,71 @@ Source : http://leanpub.com/get-your-hands-dirty-on-clean-architecture[Tom Hombe
 
 IMPORTANT: [Question] En observant le code, donnez les grands principes de cette architecture et les illustrer par des exemples de code.
 
+Les principes de l'architecture héxagonale sont :
+- Une couche centrale qui est indépendante de toute techno (Domain layer).
+- Séparer explicitement les couches Application, Domain et Infrastructure.
+- Les dépedances vont vers les domaines.
+- On isole les frontières par des Ports et des Adapters.
+
+Exemple de codes :
+	/**
+	 * Constructeur vide imposé par JPA, ne pas utiliser
+	 */
+	protected TodoItem() {	}
+	
+	public TodoItem(String id, Instant time, String content) {
+		super();
+		this.id = id;
+		this.time = time;
+		this.content = content;
+	}
+
+Par exemple ce bout de code est le constructeur de l'entité TodoItem qui est dans le Domain, on constate qu'il n'y a pas d'injection de dépendances. C'est à dire que le domaine est indépendant de toute technologie.
+
 IMPORTANT: [Question] Avec quel pattern est implémenté ici le principe d'inversion de dépendance ? (par exemple le domaine n'a aucune dépendance directe vers l'adaptateur JPA de persistance mais pourtant, il cette dernière est appelé _in fine_). Précisez les lignes de code importantes.
+ 
+C'est avec ee pattern "principe de ségrégation des interfaces" des principes SOLID. C'est une bonne pratique de la programmation orientée objet, qui stipule qu'aucun client ne devrait dépendre de méthodes qu'il n'utilise pas.
+
+package com.acme.todolist.application.port.in;
+
+import java.util.List;
+
+import com.acme.todolist.domain.TodoItem;
+
+public interface GetTodoItems {
+	
+	/**
+	 * 
+	 * @return tous les items
+	 */
+	List<TodoItem> getAllTodoItems();
+
+}
+On voit que dans cet Adapter In, il n'y a pas de d'appels de serivice unitile.
 
 IMPORTANT: [Question] Qu'est ce que l'anti-pattern domaine anémique ? à quoi le reconnaît-on ? Est-il courant dans les modèles en couche classiques ? L'architecture hexagonale change-t-elle cette situation ?
 
+Le modèle de domaine anémique est l'utilisation d'un modèle de domaine logiciel où les objets de domaine contiennent peu ou pas de logique métier (validations, calculs, règles métier, etc.).
+
+Caractéristiques :
+C'est un modèle qui ressemble à première vue à la réalité car il s'agit souvent d'objets nommés d'après les noms figurants dans l'espace de domaine. Ces objets sont connectés avec les riches relations et structures que présentent les véritables modèles de domaines. Mais dès qu'on ouvre ces objets on constate qu'ils n'ont pas de comportements (méthodes métiers). 
+Le plus souvent on y trouve uniquement des opérations basiques (CRUD).
+
+Il est adapté au modèle microservices, dans lequel il n'est pas anti-pattern car son utlisation convient.
+
+Il n'est pas adapté aux modèles classiques dans lesquels la logique métier est complexe (pas que du CRUD).
+
+
+
 Complétez ce code avec une fonctionnalité de création de `TodoItem`  persisté en base et appelé depuis un endpoint REST `POST /todos` qui renvoi un code `201` en cas de succès. La fonctionnalité à implémenter est contractualisée par le port d'entrée `AddTodoItem`.
+
 
 # Exercice 3 - Ecriture de tests
 _Temps estimé : 20 mins_
 
 * Rester sur le même code que l'exercice 2
 
-* 
+* Implémentez (en junit) des TU sur la règle de gestion qui consiste à afficher [LATE!] dans la  description d’un item en retard de plus de 24h.
+
+* Quels types de tests devra-t-on écrire pour les adapteurs ? Que teste-on dans ce cas ? S’il vous reste du temps, écrivez quelques uns de ces types de test.
 
