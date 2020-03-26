@@ -82,11 +82,9 @@ docker run --rm -it -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
 ```
 IMPORTANT: [Question]  Expliquer cette ligne de commande (y compris les options utilisées)
 
-Cette commande permet de lancer une base postgreSQL.
+* Cette commande permet de lancer une base postgreSQL.
 - L'option --rm permet de supprimer automatiquement le container une fois qu'il se ferme avec succès.
-
-- L'option -it permet de connecter un terminal de l'utilisateur au flux d'entrée et de sortie. Le mix entre les options -i et -t permet de lancer le processus en mode interactif.
-
+- L'option -it permet de connecter un terminal de l'utilisateur au flux d'entrée et de sortie. Le mix entre les options -i et -t permet  de lancer le processus en mode interactif.
 - L'option -p permet de publier le port du conteneur à l'hôte.
 
 * Compléter le code manquant dans la méthode `TodoListController.createTodoItem()`
