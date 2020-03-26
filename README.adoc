@@ -53,14 +53,14 @@ On constate un découpage sans réelle organisation car tous les fichiers des cl
 Avec une telle architecture s'il y a des centaines de classes, il sera très difficile à maintenir ou à faire évoluer car pour s'y retrouver il sera très difficile. On va rapidement se perdre dans les fichiers.
 
 Avec une bonne organisation en couches comme le suggère d'ailleurs le nom des classes on aurait ce qui suit :
-* service
-  ** TodoListController
+* service 
+** TodoListController
 * domain
-  ** TodoItem.java
-* infrastructure
-  ** TodoItemRepository.java
-* commonService
-  ** TodoListApplication.java
+**TodoItem.java
+* Infrastructure
+** TodoItemRepository.java
+* CommonService
+** TodoListApplication.java
 
 IMPORTANT: [Question]  Que se passe-t-il si l'on renomme une colonne de la base de donées ?
 
@@ -68,7 +68,7 @@ Si une colonne de  la base de données est renommée, la couche présentation ne
 
 IMPORTANT: [Question]  Où se trouve le code métier (voir la règle de gestion RG1) ? cette règle est-elle facilement testable par un test unitaire ? 
 
-Le code métier se trouve dans le "todoListController.java".
+Le code métier se trouve dans le ``todoListController.java``.
 Cette règle de gestion n'est pas facilement testable par un test unitaire car elle a une dépendance vers la base de données (vers un objet JPA). Donc pour pouvoir réaliser un test unitaire dessus il faudrait un object JPA ou un outil de mock.
 
 
@@ -135,6 +135,7 @@ Les principes de l'architecture héxagonale sont :
 - On isole les frontières par des Ports et des Adapters.
 
 Exemple de codes :
+  ```java
 	/**
 	 * Constructeur vide imposé par JPA, ne pas utiliser
 	 */
@@ -146,13 +147,14 @@ Exemple de codes :
 		this.time = time;
 		this.content = content;
 	}
+	```
 
 Par exemple ce bout de code est le constructeur de l'entité TodoItem qui est dans le Domain, on constate qu'il n'y a pas d'injection de dépendances. C'est à dire que le domaine est indépendant de toute technologie.
 
-IMPORTANT: [Question] Avec quel pattern est implémenté ici le principe d'inversion de dépendance ? (par exemple le domaine n'a aucune dépendance directe vers l'adaptateur JPA de persistance mais pourtant, il cette dernière est appelé _in fine_). Précisez les lignes de code importantes.
+IMPORTANT: [Question] Avec quel pattern est implémenté ici le principe d'inversion de dépendance ? (par exemple le domaine n'a aucune dépendance directe vers l'adaptateur JPA de persistance mais pourtant, cette dernière est appelé _in fine_). Précisez les lignes de code importantes.
  
-C'est avec ee pattern "principe de ségrégation des interfaces" des principes SOLID. C'est une bonne pratique de la programmation orientée objet, qui stipule qu'aucun client ne devrait dépendre de méthodes qu'il n'utilise pas.
-
+C'est avec le pattern "principe de ségrégation des interfaces" des principes SOLID. C'est une bonne pratique de la programmation orientée objet, qui stipule qu'aucun client ne devrait dépendre de méthodes qu'il n'utilise pas.
+ ```java
 package com.acme.todolist.application.port.in;
 
 import java.util.List;
@@ -168,13 +170,14 @@ public interface GetTodoItems {
 	List<TodoItem> getAllTodoItems();
 
 }
+ ```
 On voit que dans cet Adapter In, il n'y a pas de d'appels de serivice unitile.
 
 IMPORTANT: [Question] Qu'est ce que l'anti-pattern domaine anémique ? à quoi le reconnaît-on ? Est-il courant dans les modèles en couche classiques ? L'architecture hexagonale change-t-elle cette situation ?
 
 Le modèle de domaine anémique est l'utilisation d'un modèle de domaine logiciel où les objets de domaine contiennent peu ou pas de logique métier (validations, calculs, règles métier, etc.).
 
-Caractéristiques :
+* Caractéristiques :
 C'est un modèle qui ressemble à première vue à la réalité car il s'agit souvent d'objets nommés d'après les noms figurants dans l'espace de domaine. Ces objets sont connectés avec les riches relations et structures que présentent les véritables modèles de domaines. Mais dès qu'on ouvre ces objets on constate qu'ils n'ont pas de comportements (méthodes métiers). 
 Le plus souvent on y trouve uniquement des opérations basiques (CRUD).
 
@@ -185,7 +188,7 @@ Il n'est pas adapté aux modèles classiques dans lesquels la logique métier es
 
 
 Complétez ce code avec une fonctionnalité de création de `TodoItem`  persisté en base et appelé depuis un endpoint REST `POST /todos` qui renvoi un code `201` en cas de succès. La fonctionnalité à implémenter est contractualisée par le port d'entrée `AddTodoItem`.
-
+[NOTE] : Malheureusement nous ne pourrons pas tester pour un problème de machine comme expliqué ci-haut.
 
 # Exercice 3 - Ecriture de tests
 _Temps estimé : 20 mins_
@@ -193,6 +196,45 @@ _Temps estimé : 20 mins_
 * Rester sur le même code que l'exercice 2
 
 * Implémentez (en junit) des TU sur la règle de gestion qui consiste à afficher [LATE!] dans la  description d’un item en retard de plus de 24h.
+Test unitaire avec Junit.
+```java
+package com.acme.todolist;
 
-* Quels types de tests devra-t-on écrire pour les adapteurs ? Que teste-on dans ce cas ? S’il vous reste du temps, écrivez quelques uns de ces types de test.
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import org.junit.jupiter.api.Test;
+
+public class TodoItemTests {
+
+	static final String LATE = "[LATE!] ";
+	
+	@Test
+	public void finalContent_todoIsLate() {
+		LocalDate date = LocalDate.parse("2020-01-20");
+		Instant late = date.atStartOfDay(ZoneId.of("Europe/Paris")).toInstant();
+		TodoItem todo = new TodoItem("1", late, "this todo is late");
+
+		assertTrue(todo.finalContent().contains(LATE));
+	}
+
+	@Test
+	public void finalContent_todoIsNotLate() {
+		Instant notLate = Instant.now();
+		TodoItem todo = new TodoItem("2", notLate, "this todo is not late");
+
+		assertTrue(!todo.finalContent().contains(LATE));
+	}
+}```
+
+* Quels types de tests devra-t-on écrire pour les adapteurs ?
+
+Les tests d'intégration communememnt appélés TI sont les plus adaptés pour les adpaters.
+* Que teste-on dans ce cas ? S’il vous reste du temps, écrivez quelques uns de ces types de test.
+
+Comme leur nom l'indique, ils permettent de tester l'ingration d'un composant à autres composants. Autrement dit ils permettent de vérifier l'interopérabilité des composants logiciels, Ici les adapters.
+
+Par manque de temps, problème de machine et vu les circonstances actuelles, nous n'avons pas pu écrire de TI.
 
