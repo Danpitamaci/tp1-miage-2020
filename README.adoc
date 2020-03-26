@@ -52,14 +52,18 @@ On constate un découpage sans réelle organisation car tous les fichiers des cl
 
 Avec une telle architecture s'il y a des centaines de classes, il sera très difficile à maintenir ou à faire évoluer car pour s'y retrouver il sera très difficile. On va rapidement se perdre dans les fichiers.
 
-Avec une bonne organisation en couches comme le suggère d'ailleurs le nom des classes on aurait ce qui suit :
+Avec une bonne organisation en couches comme le suggère d'ailleurs le nom des classes on aurait ce qui suit.
+
 * service 
 ** TodoListController
+
 * domain
-**TodoItem.java
-* Infrastructure
+** TodoItem.java
+
+* infrastructure
 ** TodoItemRepository.java
-* CommonService
+
+* commonService
 ** TodoListApplication.java
 
 IMPORTANT: [Question]  Que se passe-t-il si l'on renomme une colonne de la base de donées ?
@@ -79,17 +83,22 @@ docker run --rm -it -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
 IMPORTANT: [Question]  Expliquer cette ligne de commande (y compris les options utilisées)
 
 Cette commande permet de lancer une base postgreSQL.
-* L'option --rm permet de supprimer automatiquement le container une fois qu'il se ferme avec succès.
-* L'option -it permet de connecter un terminal de l'utilisateur au flux d'entrée et de sortie. Le mix entre les options -i et -t permet de lancer le processus en mode interactif.
-* L'option -p permet de publier le port du conteneur à l'hôte.
+- L'option --rm permet de supprimer automatiquement le container une fois qu'il se ferme avec succès.
+
+- L'option -it permet de connecter un terminal de l'utilisateur au flux d'entrée et de sortie. Le mix entre les options -i et -t permet de lancer le processus en mode interactif.
+
+- L'option -p permet de publier le port du conteneur à l'hôte.
 
 * Compléter le code manquant dans la méthode `TodoListController.createTodoItem()`
 
-Cette ligne de code a été rajoutée : `todoItemRepository.save(todoItem);`
+   Cette ligne de code a été rajoutée : `todoItemRepository.save(todoItem);`
 
 * Pourquoi `todoItemRepository` est-il `null` ? Quelle est la meilleure façon de l'injecter ? Modifier le code en conséquence.
-`todoItemRepository` est nul car il n'a pas été injecté de la meilleure façon. Son instanciation ne se passe pas bien donc cela conduit à cette situation. 
+
+  `todoItemRepository` est nul car il n'a pas été injecté de la meilleure façon. Son instanciation ne se passe pas bien donc cela conduit à cette situation. 
+ 
 Pour y remédier, il faut l’injecter par le constructeur et en rajoutant l’annotation `@Inject` au constructeur. Cela permettra de faire l'autowiring comme dans la beaucoup de langages en ce moment.
+
 
 * Tester vos endpoints avec un client REST.
 
@@ -107,8 +116,10 @@ Pour y remédier, il faut l’injecter par le constructeur et en rajoutant l’a
   }
 ```
 ====
-NOTE: On n'a pas pu tester nos endpoints car la machine Linux surlquelle nous avons travailé la dernière fois refuse de démarrer aujourd'hui, on ne sait pour quelle raison. Le dual boot ne fonctionne plus.
+
+[NOTE IMPORTANTE] On n'a pas pu tester nos endpoints car la machine Linux surlquelle nous avons travailé la dernière fois refuse de démarrer aujourd'hui, on ne sait pour quelle raison. Le dual boot ne fonctionne plus.
 On a dû éditer le code directement sur GitHub car nous sommes sous Windows.
+
 * Quand les deux endpoints fonctionnent, faire un push vers Github et fermer le projet Eclipse (ne pas le supprimer).
 
 # Exercice 2 - Refactoring en architecture hexagonale
@@ -123,8 +134,10 @@ image::images/archi_hexagonale.png[]
 Source : http://leanpub.com/get-your-hands-dirty-on-clean-architecture[Tom Hombergs]
 
 * Ici, comme souvent, le domaine métier est découpés en deux couches : 
-  - la couche application qui contient tous les contrats : ports (interfaces) et les implémentations des ports d'entrée (ou "use case") et qui servent à orchestrer les entités.
-  - la couche entités qui contient les entités (au sens DDD, pas au sens JPA). En général, classes complexes (méthodes riches, relations entre les entités,  pas de simples POJO anémiques)
+  
+  - La couche application qui contient tous les contrats : ports (interfaces) et les implémentations des ports d'entrée (ou "use case") et qui servent à orchestrer les entités.
+  
+  - La couche entités qui contient les entités (au sens DDD, pas au sens JPA). En général, classes complexes (méthodes riches, relations entre les entités,  pas de simples POJO anémiques)
 
 IMPORTANT: [Question] En observant le code, donnez les grands principes de cette architecture et les illustrer par des exemples de code.
 
@@ -134,11 +147,11 @@ IMPORTANT: [Question] En observant le code, donnez les grands principes de cette
 - Les dépedances vont vers les domaines.
 - On isole les frontières par des Ports et des Adapters.
 
-Exemple de codes :
+* Exemple de code :
+
   ```java
-	/**
-	 * Constructeur vide imposé par JPA, ne pas utiliser
-	 */
+	 // Constructeur vide imposé par JPA, ne pas utiliser
+	
 	protected TodoItem() {	}
 	
 	public TodoItem(String id, Instant time, String content) {
@@ -154,7 +167,8 @@ Par exemple ce bout de code est le constructeur de l'entité TodoItem qui est da
 IMPORTANT: [Question] Avec quel pattern est implémenté ici le principe d'inversion de dépendance ? (par exemple le domaine n'a aucune dépendance directe vers l'adaptateur JPA de persistance mais pourtant, cette dernière est appelé _in fine_). Précisez les lignes de code importantes.
  
 C'est avec le pattern "principe de ségrégation des interfaces" des principes SOLID. C'est une bonne pratique de la programmation orientée objet, qui stipule qu'aucun client ne devrait dépendre de méthodes qu'il n'utilise pas.
- ```java
+
+```java
 package com.acme.todolist.application.port.in;
 
 import java.util.List;
@@ -168,27 +182,27 @@ public interface GetTodoItems {
 	 * @return tous les items
 	 */
 	List<TodoItem> getAllTodoItems();
-
 }
- ```
+```
 On voit que dans cet Adapter In, il n'y a pas de d'appels de serivice unitile.
 
 IMPORTANT: [Question] Qu'est ce que l'anti-pattern domaine anémique ? à quoi le reconnaît-on ? Est-il courant dans les modèles en couche classiques ? L'architecture hexagonale change-t-elle cette situation ?
 
 Le modèle de domaine anémique est l'utilisation d'un modèle de domaine logiciel où les objets de domaine contiennent peu ou pas de logique métier (validations, calculs, règles métier, etc.).
 
-* Caractéristiques :
+- Caractéristiques :
 C'est un modèle qui ressemble à première vue à la réalité car il s'agit souvent d'objets nommés d'après les noms figurants dans l'espace de domaine. Ces objets sont connectés avec les riches relations et structures que présentent les véritables modèles de domaines. Mais dès qu'on ouvre ces objets on constate qu'ils n'ont pas de comportements (méthodes métiers). 
 Le plus souvent on y trouve uniquement des opérations basiques (CRUD).
 
-Il est adapté au modèle microservices, dans lequel il n'est pas anti-pattern car son utlisation convient.
+ Il est adapté au modèle microservices, dans lequel il n'est pas anti-pattern car son utlisation convient.
 
-Il n'est pas adapté aux modèles classiques dans lesquels la logique métier est complexe (pas que du CRUD).
+ Il n'est pas adapté aux modèles classiques dans lesquels la logique métier est complexe (pas que du CRUD).
 
 
 
 Complétez ce code avec une fonctionnalité de création de `TodoItem`  persisté en base et appelé depuis un endpoint REST `POST /todos` qui renvoi un code `201` en cas de succès. La fonctionnalité à implémenter est contractualisée par le port d'entrée `AddTodoItem`.
-[NOTE] : Malheureusement nous ne pourrons pas tester pour un problème de machine comme expliqué ci-haut.
+
+[NOTE IMPORTANTE] : Malheureusement nous ne pourrons pas tester pour un problème de machine comme expliqué ci-haut.
 
 # Exercice 3 - Ecriture de tests
 _Temps estimé : 20 mins_
@@ -196,7 +210,9 @@ _Temps estimé : 20 mins_
 * Rester sur le même code que l'exercice 2
 
 * Implémentez (en junit) des TU sur la règle de gestion qui consiste à afficher [LATE!] dans la  description d’un item en retard de plus de 24h.
+
 Test unitaire avec Junit.
+
 ```java
 package com.acme.todolist;
 
@@ -234,6 +250,7 @@ public class TodoItemTests {
 * Quels types de tests devra-t-on écrire pour les adapteurs ?
 
 Les tests d'intégration communememnt appélés TI sont les plus adaptés pour les adpaters.
+
 * Que teste-on dans ce cas ? S’il vous reste du temps, écrivez quelques uns de ces types de test.
 
 Comme leur nom l'indique, ils permettent de tester l'ingration d'un composant à autres composants. Autrement dit ils permettent de vérifier l'interopérabilité des composants logiciels, Ici les adapters.
