@@ -79,17 +79,17 @@ docker run --rm -it -e POSTGRES_PASSWORD=password -p 5432:5432 postgres
 IMPORTANT: [Question]  Expliquer cette ligne de commande (y compris les options utilisées)
 
 Cette commande permet de lancer une base postgreSQL.
-L'option --rm permet de supprimer automatiquement le container une fois qu'il se ferme avec succès.
-L'option -it permet de connecter un terminal de l'utilisateur au flux d'entrée et de sortie. Le mix entre les options -i et -t permet de lancer le processus en mode interactif.
-L'option -p permet de publier le port du conteneur à l'hôte.
+* L'option --rm permet de supprimer automatiquement le container une fois qu'il se ferme avec succès.
+* L'option -it permet de connecter un terminal de l'utilisateur au flux d'entrée et de sortie. Le mix entre les options -i et -t permet de lancer le processus en mode interactif.
+* L'option -p permet de publier le port du conteneur à l'hôte.
 
 * Compléter le code manquant dans la méthode `TodoListController.createTodoItem()`
 
 Cette ligne de code a été rajoutée : `todoItemRepository.save(todoItem);`
 
 * Pourquoi `todoItemRepository` est-il `null` ? Quelle est la meilleure façon de l'injecter ? Modifier le code en conséquence.
-`todoItemRepository` est nul car il n'a pas été injecté de la meilleure façon. Son insatnciation ne se passe pas bien donc cela conduit à cette situation. 
-Pour y remédier, il l’injecter par le constructeur et en rajoutant l’annotation ‘@Inject’ au constructeur. Cela permettra de faire l'autowiring comme dans la beaucoup de langages en ce moment.
+`todoItemRepository` est nul car il n'a pas été injecté de la meilleure façon. Son instanciation ne se passe pas bien donc cela conduit à cette situation. 
+Pour y remédier, il faut l’injecter par le constructeur et en rajoutant l’annotation `@Inject` au constructeur. Cela permettra de faire l'autowiring comme dans la beaucoup de langages en ce moment.
 
 * Tester vos endpoints avec un client REST.
 
@@ -128,7 +128,7 @@ Source : http://leanpub.com/get-your-hands-dirty-on-clean-architecture[Tom Hombe
 
 IMPORTANT: [Question] En observant le code, donnez les grands principes de cette architecture et les illustrer par des exemples de code.
 
-Les principes de l'architecture héxagonale sont :
+* Les principes de l'architecture héxagonale sont :
 - Une couche centrale qui est indépendante de toute techno (Domain layer).
 - Séparer explicitement les couches Application, Domain et Infrastructure.
 - Les dépedances vont vers les domaines.
@@ -227,7 +227,9 @@ public class TodoItemTests {
 
 		assertTrue(!todo.finalContent().contains(LATE));
 	}
-}```
+}
+
+```
 
 * Quels types de tests devra-t-on écrire pour les adapteurs ?
 
