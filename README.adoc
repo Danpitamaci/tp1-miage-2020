@@ -48,12 +48,19 @@ _Temps estimé : 1 h_
 
 IMPORTANT: [Question]  Que constatez-vous  en terme de découpage du code ? Imaginez un projet d'entreprise constitué de centaines de classes ainsi structuré. Que risque-t-il d'arriver ?
 
-On constate un découpage en couches mais sans les packages. 
+On constate un découpage sans réelle organisation car tous les fichiers des classes sont dans un seul et même repertoire. 
 
-Avec une telle architecture s'il y a des centaines de classes, il y aura une forte dépendance des implémentations entre les classes. Car cette architecture ne respecte pas le "D" des 5 principes SOLID. Il faut dépendre des abstactions et pas des implémentations.
-Une granularité trop fine est mal adaptée à la programmation grande echelle.
+Avec une telle architecture s'il y a des centaines de classes, il sera très difficile à maintenir ou à faire évoluer car pour s'y retrouver il sera très difficile. On va rapidement se perdre dans les fichiers.
 
- En plus, un tel découpage, sans packages, devient rapidement ingérable si le nombre de classes augmente. On va rapidement se perdre dans les fichiers.
+Avec une bonne organisation en couches comme le suggère d'ailleurs le nom des classes on aurait ce qui suit :
+* service
+  ** TodoListController
+* domain
+  ** TodoItem.java
+* infrastructure
+  ** TodoItemRepository.java
+* commonService
+  ** TodoListApplication.java
 
 IMPORTANT: [Question]  Que se passe-t-il si l'on renomme une colonne de la base de donées ?
 
@@ -78,8 +85,11 @@ L'option -p permet de publier le port du conteneur à l'hôte.
 
 * Compléter le code manquant dans la méthode `TodoListController.createTodoItem()`
 
+Cette ligne de code a été rajoutée : `todoItemRepository.save(todoItem);`
 
 * Pourquoi `todoItemRepository` est-il `null` ? Quelle est la meilleure façon de l'injecter ? Modifier le code en conséquence.
+`todoItemRepository` est nul car il n'a pas été injecté de la meilleure façon. Son insatnciation ne se passe pas bien donc cela conduit à cette situation. 
+Pour y remédier, il l’injecter par le constructeur et en rajoutant l’annotation ‘@Inject’ au constructeur. Cela permettra de faire l'autowiring comme dans la beaucoup de langages en ce moment.
 
 * Tester vos endpoints avec un client REST.
 
@@ -97,7 +107,8 @@ L'option -p permet de publier le port du conteneur à l'hôte.
   }
 ```
 ====
-
+NOTE: On n'a pas pu tester nos endpoints car la machine Linux surlquelle nous avons travailé la dernière fois refuse de démarrer aujourd'hui, on ne sait pour quelle raison. Le dual boot ne fonctionne plus.
+On a dû éditer le code directement sur GitHub car nous sommes sous Windows.
 * Quand les deux endpoints fonctionnent, faire un push vers Github et fermer le projet Eclipse (ne pas le supprimer).
 
 # Exercice 2 - Refactoring en architecture hexagonale
